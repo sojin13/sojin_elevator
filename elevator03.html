@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Elevator</title>
+    <style>
+      #container{ border: 2px solid grey; width:350px;  margin-left:100px;}
+      #ev{border: 1px solid black; width: 50px; height: 70px;
+          position:absolute;
+          margin-left: 230px; top:550px;
+
+          }
+      input {margin-left:10px; width:50px; height:30px;}
+      img {margin-left: 50px; width: 70px; float: left;}
+      .floor{vertical-align: middle;}
+      .btn{float:left; }
+      #reset {clear:both;}
+
+    </style>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  </head>
+  <body>
+    <h2>Elevator</h2>
+    <div id="container">
+      <hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="5f" value="5" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" ></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="4f" value="4" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="3f" value="3" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="2f" value="2" class="floorBtn" /></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="1f" value="1" class="floorBtn" /></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+        <div id="ev">EV</div>
+      </div>
+      <div id="reset"></div><hr>
+      <!-- <div class="floor">
+        <div class="btn"><input type="button" id="up" value="up"/></div>
+        <div class="btn"><input type="button" id="down" value="down"/></div>
+        <div class="btn"><input type="button" id="check" value="check"/></div>
+
+      </div>
+      <div id="reset"></div> -->
+      <!-- <hr> -->
+    </div>
+
+    <script type="text/javascript">
+      //전역변수 (대기, 방향, 목적지, 문, 콜배열)
+      let ev_standby = true;
+      let ev_direction ='up';
+      let ev_destination ='foo';
+      let ev_door = false;
+      let ev_callarray = new Array(0);
+
+      //이벤트 리스너 걸기
+      $(document).ready(function(){
+
+        let all_floor = document.querySelectorAll('.floorBtn');
+        for (let i=0; i<all_floor.length; i++){
+          all_floor[i].addEventListener('click', floorCall); //각 층 div 안의 input button
+        }
+      });
+
+
+      //<1> 엘리베이터 조정 Flow 시스템
+      //각 층 가는 move
+      //top:110x(5-해당층)px
+      function moveEle(){
+        console.log("moveEle()");
+        console.log("closeDoor up: "+ev_callarray);
+        console.log("ev_destination: "+ev_destination);
+
+        if(ev_standby==true){
+          //대기 중일 땐 움직이지 않는다.
+
+        } else {
+          if(ev_callarray.length==0){
+            ev_standby=true;
+            turnOffEle();
+
+          } else {
+            turnOnEle();
+            let tmp = ev_callarray[0];
+            console.log(tmp);
+            $("#ev").animate({"top":550-((tmp-1)*110)+"px"}, 1000);
+            let key= setTimeout("openDoor("+tmp+")", 1500);
+
+          }
+        }
+      }
+
+
+      function openDoor(tmp){
+        let all_floor = document.querySelectorAll("img");
+
+        $(all_floor).eq(5-tmp).attr("src","img/on.png");
+        let key = setTimeout("closeDoor("+tmp+")", 500);
+
+      }
+
+      function closeDoor(tmp){
+        let all_floor = document.querySelectorAll("img");
+
+        floorBtnAdjust(tmp, "off");
+        $(all_floor).eq(5-tmp).attr("src","img/off.png");
+
+        //안전장치 - 방향
+        if(ev_callarray[0]==ev_destination && ev_callarray.length>1){
+          ev_direction=='up'? ev_direction='down' : ev_direction='up';
+        }
+        ev_callarray.shift();
+
+
+        //안전장치 - 정렬
+        let ev = document.querySelector('#ev');
+        let findFloor = parseInt(getStyle(ev, 'top', 'top'));
+        findFloor = (660-findFloor) / 110;
+        let ev_floor = (6- Math.floor(findFloor));
+
+
+        if(ev_direction=='up'){
+
+          let arr=ev_callarray.filter(function(n){
+            return n >= tmp;
+          });
+
+          let arr2=ev_callarray.filter(function(n){
+            return n < tmp;
+          });
+
+          arr.sort(function(a, b){return a-b});
+          ev_destination=arr[arr.length-1];
+          arr2.sort(function(a, b){return b-a});
+          ev_callarray=arr.concat(arr2);
+
+          console.log("closeDoor up: "+ev_callarray);
+          console.log("ev_destination: "+ev_destination);
+
+        } else { //ev_direction=='down'
+          let arr=ev_callarray.filter(function(n){
+            return n <= tmp;
+          });
+          let arr2=ev_callarray.filter(function(n){
+            return n > tmp;
+          });
+          arr.sort(function(a, b){return b-a});
+          ev_destination=arr[arr.length-1];
+          console.log(arr);
+          arr2.sort(function(a, b){return a-b});
+          console.log(arr2);
+          ev_callarray=arr.concat(arr2);
+
+          console.log("closeDoor down: "+ev_callarray);
+          console.log("ev_destination: "+ev_destination);
+        }
+
+        moveEle();
+
+      }
+
+
+      //<2>콜 배열 조정 Flow 시스템 + 최초 동작 신호 줌startEv()
+      //버튼 콜 시스템(엘리베이터 콜/ 목적지 배열 조정)
+      function floorCall(){
+
+        //1. 버튼 누른 층 콜 값을 받음
+        let call_floor = parseInt(this.value);
+        let message = 'on';
+        console.log(call_floor);
+        floorBtnAdjust(call_floor, message);
+
+        //2. 현재 층(엘베 있는 층) 값을 가져옴
+        let ev = document.querySelector('#ev');
+        let findFloor = parseInt(getStyle(ev, 'top', 'top'));
+        console.log("floorCall() evTop: "+findFloor);
+        findFloor = (660-findFloor) / 110;
+        let ev_floor = Math.floor(findFloor)
+        console.log("floorCall() findFloor: "+findFloor);
+        console.log("floorCall() ev_floor: "+ev_floor);
+
+
+        //3.엘베가 대기중인가?
+        if(ev_standby==true){
+          //3-1. Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
+          startEv(call_floor, ev_floor);
+        } else {
+          //+중복 콜 확인
+          if(ev_callarray.indexOf(call_floor)==-1){
+            // 제이쿼리 간단화 (3-2 삭제)
+            ev_callarray.push(call_floor);
+          }
+        }
+      } //floorCall() 끝
+
+
+      //3-1 대기중인 엘베 가동 메소드
+      function startEv(call_floor, ev_floor){
+        //Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
+
+        let ev = document.querySelector('#ev');
+
+        //1. 방향 정하기 : 현재 층과 콜 값을 비교함
+        let gap = ev_floor - call_floor;
+
+          //현재 층보다 콜 값이 높나? yes-> direction=up // no ->down
+          if(gap < 0) { //콜 값이 높음
+            ev_direction="up";
+
+          } else if (gap > 0) { // 콜 값이 낮음
+            ev_direction="down";
+
+          } else { //undefined 등
+            console.log("startEv() gap: "+ gap);
+            console.log("floorCall gap 값 확인");
+          }
+
+          //2. 목적지 설정
+          ev_destination=call_floor;
+          ev_callarray[0]=call_floor;
+
+          //3. 엘리베이터 대기상태 off
+          if(ev_callarray[0]=ev_destination){ //초반 예외 오류 검사
+            ev_standby=false;
+            // moveEle 호출
+            console.log("startEv()->moveEle call_floor:" +call_floor);
+
+            //jQuery에서는 모두 moveEle()로 간다.
+            moveEle();
+
+        }
+      } //startEv()끝
+
+
+      //목적지 조정 메소드
+      function adjustDestin(){
+        if(ev_direction=='up'){
+          ev_callarray.sort(function(a, b){return a-b});
+          let num = ev_callarray.length;
+          console.log(num);
+          ev_destination=ev_callarray[num-1];
+
+
+        } else {
+          ev_callarray.sort(function(a, b){return b-a});
+          let num = ev_callarray.length;
+          console.log(num);
+          ev_destination=ev_callarray[num-1];
+        }
+        console.log("---------------------------");
+        console.log("ev_callarray: "+ev_callarray);
+        console.log("ev_direction: "+ev_direction);
+        console.log("ev_destination: "+ev_destination);
+        console.log("------------adjustDestin() 끝");
+      }
+
+
+
+      //엘리베이터 작동/미작동 색상 변경
+      function turnOnEle(){
+        $("#ev").css({"background-color":"pink", "color":"white"})
+      }
+      function turnOffEle(){
+        $("#ev").css({"background-color":"", "color":""})
+      }
+
+      //버튼 색 변경 관련 메소드
+      function floorBtnAdjust(floor, message){
+        if (message=="on"){ //버튼 누름
+          let btn = $("#"+floor+"f");
+          console.log(floor);
+          console.log(btn);
+          $(btn).css("background-color","red");
+          $(btn).css("disabled","disabled");
+        } else if (message="off") { //콜 삭제
+          let btn = $("#"+floor+"f");
+          $(btn).css("background-color","");
+          $(btn).css("disabled","");
+        }
+
+      }
+
+      //스타일 속성 가져오기
+			function getStyle(elem, cssprop, cssprop2){
+			   //IE
+				 if(elem.currentStyle){
+						 return elem.currentStyle[cssprop];
+				 //다른 브라우저
+				 } else if(document.defaultView && document.defaultView.getComputedStyle) {
+						 return document.defaultView.getComputedStyle(elem, null).getPropertyValue(cssprop2);
+				 //대비책
+				 } else {
+						 return null;
+				 }
+		   }
+
+
+
+    </script>
+  </body>
+</html>
