@@ -7,20 +7,17 @@
       #container{ border: 2px solid grey; width:350px;  margin-left:100px;}
       #ev{border: 1px solid black; width: 50px; height: 70px;
           position:absolute;
-          margin-left: 230px; top:550px;
-
-          }
+          margin-left: 230px; top:550px; }
+      #reset {clear:both;}
+      .floor{vertical-align: middle;}
+      .btn{float:left;}
       input {margin-left:10px; width:50px; height:30px;}
       img {margin-left: 50px; width: 70px; float: left;}
-      .floor{vertical-align: middle;}
-      .btn{float:left; }
-      #reset {clear:both;}
-
     </style>
-    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-latest.min.js"></script>
   </head>
   <body>
-    <h2>Elevator</h2>
+    <h2>Elevator v1.0</h2>
     <div id="container">
       <hr>
       <div class="floor">
@@ -49,17 +46,9 @@
         <div id="ev">EV</div>
       </div>
       <div id="reset"></div><hr>
-      <!-- <div class="floor">
-        <div class="btn"><input type="button" id="up" value="up"/></div>
-        <div class="btn"><input type="button" id="down" value="down"/></div>
-        <div class="btn"><input type="button" id="check" value="check"/></div>
-
-      </div>
-      <div id="reset"></div> -->
-      <!-- <hr> -->
     </div>
-
     <script type="text/javascript">
+
       //전역변수 (대기, 방향, 목적지, 문, 콜배열)
       let ev_standby = true;
       let ev_direction ='up';
@@ -69,15 +58,83 @@
 
       //이벤트 리스너 걸기
       $(document).ready(function(){
-
+        //각 층 div 안의 input button
         let all_floor = document.querySelectorAll('.floorBtn');
         for (let i=0; i<all_floor.length; i++){
-          all_floor[i].addEventListener('click', floorCall); //각 층 div 안의 input button
+          all_floor[i].addEventListener('click', floorCall);
         }
       });
 
 
-      //<1> 엘리베이터 조정 Flow 시스템
+      //<1> 버튼 콜 시스템(엘리베이터 콜/ 최초 동작 신호 줌startEv())
+      function floorCall(){
+
+        //1. 버튼 누른 층 콜 값을 받음
+        let call_floor = parseInt(this.value);
+        let message = 'on';
+        console.log(call_floor);
+        floorBtnAdjust(call_floor, message);
+
+        //2. 현재 층(엘베 있는 층) 값을 가져옴
+        let ev = document.querySelector('#ev');
+        let evTop = parseInt(getStyle(ev, 'top', 'top'));
+        console.log("floorCall() evTop: "+evTop);
+
+        let findFloor = (660-evTop) / 110;
+        let ev_floor = Math.floor(findFloor)
+        console.log("floorCall() findFloor: "+findFloor);
+        console.log("floorCall() ev_floor: "+ev_floor);
+
+        //3.엘베가 대기중인가?
+        if(ev_standby==true){
+          //3-1. Yes: 콜층 목적지/ 방향 정해줌. false로 엘베 시스템 켜줌
+          startEv(call_floor, ev_floor);
+        } else {
+          //+중복 콜 확인
+          if(ev_callarray.indexOf(call_floor)==-1){
+            // 제이쿼리 간단화 (3-2 adjustEv 콜정렬 알고리즘 삭제)
+            ev_callarray.push(call_floor);
+          }
+        }
+      } //floorCall() 끝
+
+
+      //3-1 대기중인 엘베 가동 메소드
+      function startEv(call_floor, ev_floor){
+
+        //1. 방향 정하기 : 현재 층과 콜 값을 비교함
+        let gap = ev_floor - call_floor;
+
+          //현재 층보다 콜 값이 높나? yes-> direction=up // no ->down
+          if(gap < 0) { //콜 값이 높음
+            ev_direction="up";
+
+          } else if (gap > 0) { // 콜 값이 낮음
+            ev_direction="down";
+
+          } else { //undefined 등
+            console.log("startEv() gap: "+ gap);
+            console.log("floorCall gap 값 확인");
+          }
+
+          //2. 목적지 설정
+          ev_destination=call_floor;
+          ev_callarray[0]=call_floor;
+
+          //3. 엘리베이터 대기상태 off
+          if(ev_callarray[0]=ev_destination){ //초반 예외 오류 검사
+            ev_standby=false;
+            // moveEle 호출
+            console.log("startEv()->moveEle call_floor:" +call_floor);
+
+            //jQuery에서는 모두 moveEle()로 간다.
+            moveEle();
+
+        }
+      } //startEv()끝
+
+
+      //<2> 엘리베이터 조정 Flow 시스템
       //각 층 가는 move
       //top:110x(5-해당층)px
       function moveEle(){
@@ -104,7 +161,6 @@
         }
       }
 
-
       function openDoor(tmp){
         let all_floor = document.querySelectorAll("img");
 
@@ -127,12 +183,6 @@
 
 
         //안전장치 - 정렬
-        let ev = document.querySelector('#ev');
-        let findFloor = parseInt(getStyle(ev, 'top', 'top'));
-        findFloor = (660-findFloor) / 110;
-        let ev_floor = (6- Math.floor(findFloor));
-
-
         if(ev_direction=='up'){
 
           let arr=ev_callarray.filter(function(n){
@@ -172,78 +222,6 @@
         moveEle();
 
       }
-
-
-      //<2>콜 배열 조정 Flow 시스템 + 최초 동작 신호 줌startEv()
-      //버튼 콜 시스템(엘리베이터 콜/ 목적지 배열 조정)
-      function floorCall(){
-
-        //1. 버튼 누른 층 콜 값을 받음
-        let call_floor = parseInt(this.value);
-        let message = 'on';
-        console.log(call_floor);
-        floorBtnAdjust(call_floor, message);
-
-        //2. 현재 층(엘베 있는 층) 값을 가져옴
-        let ev = document.querySelector('#ev');
-        let findFloor = parseInt(getStyle(ev, 'top', 'top'));
-        console.log("floorCall() evTop: "+findFloor);
-        findFloor = (660-findFloor) / 110;
-        let ev_floor = Math.floor(findFloor)
-        console.log("floorCall() findFloor: "+findFloor);
-        console.log("floorCall() ev_floor: "+ev_floor);
-
-
-        //3.엘베가 대기중인가?
-        if(ev_standby==true){
-          //3-1. Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
-          startEv(call_floor, ev_floor);
-        } else {
-          //+중복 콜 확인
-          if(ev_callarray.indexOf(call_floor)==-1){
-            // 제이쿼리 간단화 (3-2 삭제)
-            ev_callarray.push(call_floor);
-          }
-        }
-      } //floorCall() 끝
-
-
-      //3-1 대기중인 엘베 가동 메소드
-      function startEv(call_floor, ev_floor){
-        //Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
-
-        let ev = document.querySelector('#ev');
-
-        //1. 방향 정하기 : 현재 층과 콜 값을 비교함
-        let gap = ev_floor - call_floor;
-
-          //현재 층보다 콜 값이 높나? yes-> direction=up // no ->down
-          if(gap < 0) { //콜 값이 높음
-            ev_direction="up";
-
-          } else if (gap > 0) { // 콜 값이 낮음
-            ev_direction="down";
-
-          } else { //undefined 등
-            console.log("startEv() gap: "+ gap);
-            console.log("floorCall gap 값 확인");
-          }
-
-          //2. 목적지 설정
-          ev_destination=call_floor;
-          ev_callarray[0]=call_floor;
-
-          //3. 엘리베이터 대기상태 off
-          if(ev_callarray[0]=ev_destination){ //초반 예외 오류 검사
-            ev_standby=false;
-            // moveEle 호출
-            console.log("startEv()->moveEle call_floor:" +call_floor);
-
-            //jQuery에서는 모두 moveEle()로 간다.
-            moveEle();
-
-        }
-      } //startEv()끝
 
 
       //목적지 조정 메소드
