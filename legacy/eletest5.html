@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Elevator Test 5</title>
+    <style>
+      #container{ border: 2px solid grey; width:300px;  margin-left:100px; margin-top: 10px;}
+      #board{ border: 2px solid black; width:400px; height:50px; margin-left: 50px;}
+      #ev{margin-left:90px; border: 1px solid black; width: 50px; height: 60px; }
+      span {margin-left: 10px;}
+      input {margin-left:10px; width:50px; height:30px}
+      .floor{height: 90px; padding-top:20px;}
+      .floorBtn{background-color: ;}
+    </style>
+  </head>
+  <body>
+    <h2>Elevator Test 5</h2>
+    <div id="container"><hr>
+      <div class="floor">
+        <input type="button" id="5" value="5" class="floorBtn" />
+      </div><hr>
+      <div class="floor">
+        <input type="button" id="4" value="4" class="floorBtn"  />
+      </div><hr>
+      <div class="floor">
+        <input type="button" id="3" value="3" class="floorBtn"  />
+      </div><hr>
+      <div class="floor">
+        <input type="button" id="2" value="2" class="floorBtn" />
+      </div><hr>
+      <div class="floor">
+        <input type="button" id="1" value="1" class="floorBtn" />
+        <input type="button" id="ev" value="EV" />
+      </div><hr>
+    </div>
+    <script type="text/javascript">
+
+    //전역변수
+    let ev_standby = true;
+    let ev_direction ='foo';
+    let ev_destination ='foo';
+    let intervalId= 'foo';
+    let ev_door = false;
+    let ev_callarray = new Array(0);
+
+    window.onload = function(){
+      //이벤트 리스너
+      //각층 버튼 콜에 시스템 부르는 이벤트 걸기(for문)
+      let all_floor = document.querySelectorAll('.floor');
+      for (let i=0; i<all_floor.length; i++){
+        all_floor[i].children[0].addEventListener('click', floorCall); //각 층 div 안의 input button
+      }
+
+    }
+
+    function closeDoor(){
+      //여기서 배열 검사
+      let ev = document.querySelector('#ev');
+      let present_floor = parseInt(ev.parentNode.children[0].id);
+
+      floorBtnAdjust(present_floor, "off");
+      ev.style.backgroundColor="";
+
+      if(ev_callarray.length=='0'){
+        ev_standby = true;
+        clearInterval(intervalId);
+      }
+      ev_door=false;
+    }
+
+      function openDoor(){
+        let ev = document.querySelector('#ev');
+        let present_floor = parseInt(ev.parentNode.children[0].id);
+
+        ev_callarray.shift();
+        ev.style.backgroundColor="yellow";
+        // floorBtnAdjust(present_floor, "off");
+        ev_door = true;
+
+        if(present_floor==ev_destination){
+          adjustDestin();
+        }
+
+      }//openDoor()끝
+
+
+      function moveEv(){ //이거 배열은 순서 달리 생각해야함
+        let all_floor = document.querySelectorAll(".floor");
+        let ev = document.querySelector("#ev");
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+        if(ev_direction=="up"){
+
+          if(ev_floor==5){
+            console.log("배열 오류 가능성 있음");
+            ev_direction='down';
+            adjustDestin();
+          } else {
+
+            let present_floor_arrynum = ( 5 - parseInt(ev.parentNode.children[0].id)); //배열순서로 리턴
+
+            present_floor_arrynum = present_floor_arrynum - 1; // 배열순서상 0에 가까워짐
+            all_floor[present_floor_arrynum].append(ev);
+          }
+
+        } else if(ev_direction=="down") {
+          if(ev_floor==1){
+            console.log("배열 오류 가능성 있음");
+            ev_direction='up';
+            adjustDestin();
+          } else {
+            let present_floor_arrynum = ( 5 - parseInt(ev.parentNode.children[0].id)); //배열순서로 리턴
+            present_floor_arrynum = present_floor_arrynum + 1; // 배열순서상 5에 가까워짐
+            all_floor[present_floor_arrynum].append(ev);
+
+          }
+
+        } else {
+          //예외처리
+          console.log("moveEv: "+ev_direction);
+        }
+      }
+
+
+      //엘베 이동 메소드
+      function handleEv(){
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+        let present_floor = parseInt(ev.parentNode.children[0].id);
+        console.log("ev_callarray handle: "+ev_callarray.toString());
+        console.log("ev_destination: "+ev_destination);
+        console.log("ev_direction: "+ev_direction);
+        console.log("ev_standby: "+ev_standby);
+        console.log("ev_door: "+ev_door);
+        //0. 문 열림?
+        if(ev_door == true){
+          //문 닫기
+          closeDoor();
+        } else {
+
+          //1.진행방향 up
+          if(ev_direction=='up'){
+            let ev = document.querySelector('#ev');
+            let present_floor = parseInt(ev.parentNode.children[0].id);
+
+            //1-1 어레이[0]=현재층
+            if(ev_callarray[0]==present_floor){
+                if(ev_callarray[0]==ev_destination){
+                  //1-1-1 어레이[0]=현재층=목적층 ==> 도착
+                  if(ev_callarray.length>0){
+                    //목적지 도착했는데 array 남아 있을시 방향 변경
+                    ev_direction='down';
+                  }
+                  //문열림
+                  openDoor();
+                } else {
+                  //1-1-2  목적층은 아님
+                  //문열림
+                  openDoor();
+                }
+            } else {
+
+            moveEv();
+
+            }
+
+            //2. 진행방향 down
+          } else if(ev_direction=='down'){
+            let ev = document.querySelector('#ev');
+            let present_floor = parseInt(ev.parentNode.children[0].id);
+
+            //2-1 어레이[0]=현재층
+            if(ev_callarray[0]==present_floor){
+                if(ev_callarray[0]==ev_destination){
+                  //2-1-1 어레이[0]=현재층=목적층 ==> 도착
+                  if(ev_callarray.length>0){
+                    //목적지 도착했는데 array 남아 있을시 방향 변경//목적지갱신
+                    ev_direction='up';
+
+                  }
+                  //문열림
+                  openDoor();
+                } else {
+                  //2-1-2  목적층은 아님
+                  //문열림
+                  openDoor();
+                }
+            } else {
+              //1-2 어레이[0]
+              //한칸 down 이동
+              moveEv();
+
+            }
+          } else {
+            //방향 없음 예외처리
+          }
+        }
+      }//handleEv()끝
+
+
+      //버튼 콜 시스템(엘리베이터 콜/ 목적지 배열 조정)
+      function floorCall(){
+
+        //1. 버튼 누른 층 콜 값을 받음
+        let call_floor = parseInt(this.value);
+        let message = 'on';
+        floorBtnAdjust(call_floor, message);
+
+        //2. 현재 층(엘베 있는 층) 값을 가져옴
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+        //3.엘베가 대기중인가?
+        if(ev_standby==true){
+          //3-1. Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
+          startEv(call_floor);
+        } else {
+          //+중복 콜 확인
+          if(ev_callarray.indexOf(call_floor)==-1){
+            //3-2. No: 현재 무빙 방향 확인하고 목적지/콜 배열 조정.
+            adjustEv(call_floor);
+          }
+        }
+      } //floorCall() 끝
+
+      //3-1 대기중인 엘베 가동 메소드
+      function startEv(call_floor){
+        //Yes: 콜층 목적지 설정. 엘베 움직일 방향 정해줌. false로 엘베 시스템 켜줌
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+        //1. 방향 정하기 : 현재 층과 콜 값을 비교함
+        let gap = ev_floor - call_floor;
+
+
+        if(gap==0){
+          // 같으면 그냥 문 열림.
+           console.log("여기로왔음. ");
+           floorBtnAdjust(ev_floor, "on")
+           openDoor();
+           let settimerId= setTimeout("closeDoor()", 1000);
+
+        } else {
+
+          //현재 층보다 콜 값이 높나? yes-> direction=up // no ->
+          if(gap < 0) { //콜 값이 높음
+            ev_direction="up";
+
+          } else if (gap > 0) { // 콜 값이 낮음
+            ev_direction="down";
+
+          } else { //undefined 등
+            console.log("gap: "+ gap);
+            console.log("floorCall gap 값 확인");
+          }
+
+          //2. 목적지 설정
+          ev_destination=call_floor;
+          ev_callarray[0]=call_floor;
+
+          //3. 엘리베이터 대기상태 off
+          if(ev_callarray[0]=ev_destination){ //초반 예외 오류 검사
+            ev_standby=false;
+            // 1초마다 handleEV() 호출
+            intervalId = setInterval("handleEv()", 1000);
+          }
+        }
+      } //startEv()끝
+
+      //3-2 목적지 배열 조정 메소드
+      function adjustEv(call_floor){
+        //현재 무빙 방향 확인하고 목적지/콜 배열 조정.
+
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+        //1. 방향을 확인
+        //2. 배열을 조정한다.
+        if(ev_direction=='up'){
+          //2-1. dir=up 일 때
+          if(ev_floor<=call_floor){
+            //2-1-1 call 값 현재 층 보다 높다
+            if(ev_destination<call_floor){
+              //2-1-1-1 call 값 목적 층 보다 높다
+              //원래 목적 층의 뒤 배열에 추가
+              //목적 층 갱신
+              let index_d=ev_callarray.indexOf(ev_destination);
+              ev_callarray.splice(index_d+1,0,call_floor);
+              ev_callarray.flat();
+              ev_destination=call_floor;
+
+            } else if(ev_destination>call_floor){
+              //2-1-1-2 call 값 목적 층 보다 낮다 (도중에 call층 들름)
+              //콜 배열 목적 층 앞에 추가하고
+              let index_d=ev_callarray.indexOf(ev_destination);
+              ev_callarray.splice(index_d,0,call_floor);
+
+
+              //+목적층 이전 배열 slice해서 sort 후 다시 splice로 붙여줌.
+              let tmp_array=ev_callarray.slice(0, index_d+2);
+              let tmp_array2=ev_callarray.slice(index_d+2); //뒷부분 혹시 존재시 반대로
+
+              tmp_array.sort(function(a, b){return a-b});
+              tmp_array2.sort(function(a, b){return b-a});
+
+              ev_callarray=tmp_array.concat(tmp_array2);
+
+              console.log(ev_callarray);
+
+            } else {
+              ev_callarray.push(call_floor);
+              console.log(ev_callarray);
+              console.log("예외 처리: ev_destination=call_floor || up");
+            }
+
+          } else if(ev_floor>call_floor) {
+            //2-1-2 call 값 현재 층 보다 높지 않다. (목적지 도착 이후로 미룬다. 배열 마지막 추가.)
+            ev_callarray.push(call_floor);
+            console.log(ev_callarray);
+
+          }
+
+
+
+        } else if(ev_direction=='down'){
+          //2-2. dir=down 일 때
+          if(ev_floor<=call_floor){
+            //2-2-1 call 값 현재 층 보다 높다(목적지 도착 이후로 미룬다. 배열 마지막 추가.)
+            ev_callarray.push(call_floor);
+            console.log(ev_callarray);
+
+          } else if(ev_floor>call_floor) {
+            //2-2-2 call 값 현재 층 보다 높지 않다.
+            if(ev_destination>call_floor) {
+              //2-2-2-1 call 값 목적 층 보다 높다 (도중에 call 층 들름)
+              // +목적층 이전 배열 slice해서 sort 해주고 다시 붙여줌.
+              let index_d=ev_callarray.indexOf(ev_destination);
+              ev_callarray.splice(index_d,0,call_floor);
+
+              let tmp_array=ev_callarray.slice(0, index_d+2);
+              let tmp_array2=ev_callarray.slice(index_d+2); //뒷부분 혹시 존재시 반대로
+
+              tmp_array.sort(function(a, b){return b-a});
+              tmp_array2.sort(function(a, b){return a-b})
+
+              ev_callarray=tmp_array.concat(tmp_array2);
+
+              console.log(ev_callarray);
+
+            } else if(ev_destination>call_floor) {
+              //2-2-2-2 call 값 목적 층 보다 낮다 (목적층 갱신)
+              let index_d=ev_callarray.indexOf(ev_destination);
+              ev_callarray.splice(index_d+1,0,call_floor);
+              ev_callarray.flat();
+              ev_destination=call_floor;
+
+            } else {
+              ev_callarray.push(call_floor);
+              console.log(ev_callarray);
+              console.log("예외: ev_destination=call_floor || down");
+            }
+
+          }
+
+
+        } else {
+          //예외처리
+          console.log("예외처리: direction 없음");
+        }
+
+        //3. 배열을 반환한다.(전역변수라서 갱신)
+        console.log("3.배열을 반환: "+ev_callarray);
+
+        console.log("-----------adjustEv() 끝");
+
+      }//adjustEv() 끝
+
+
+      //목적지 조정 메소드
+      function adjustDestin(){
+        if(ev_direction=='up'){
+          ev_callarray.sort(function(a, b){return a-b});
+          let num = ev_callarray.length;
+          console.log(num);
+          ev_destination=ev_callarray[num-1];
+
+
+        } else {
+          ev_callarray.sort(function(a, b){return b-a});
+          let num = ev_callarray.length;
+          console.log(num);
+          ev_destination=ev_callarray[num-1];
+        }
+        console.log("------------adjustDestin() 끝");
+      }
+
+
+
+      //버튼 색 변경 관련 메소드
+      function floorBtnAdjust(floor, message){
+        if (message=="on"){ //버튼 누름
+          let btn = document.getElementById(floor);
+          btn.style.backgroundColor="red";
+          btn.style.disabled="disabled";
+        } else if (message="off") { //콜 삭제
+          let btn = document.getElementById(floor);
+          btn.style.backgroundColor='';
+          btn.style.disabled='';
+        }
+
+      }
+
+
+    </script>
+  </body>
+</html>

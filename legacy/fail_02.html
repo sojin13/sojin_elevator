@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Elevator Test 2 - fail 2</title>
+    <style>
+      #container{ border: 2px solid grey; width:300px;  margin-left:100px; margin-top: 10px;}
+      #board{ border: 2px solid black; width:400px; height:50px; margin-left: 50px;}
+      #ev{margin-left:90px; border: 1px solid black; width: 50px; height: 60px; }
+      span {margin-left: 10px;}
+      input {margin-left:10px; width:50px; height:30px}
+      .floor{height: 90px; padding-top:20px;}
+    </style>
+  </head>
+  <body>
+    <h2>Elevator Test 2 - fail 2</h2>
+    <div id="board">
+      <span id="call">Call: </span><br/>
+      <span id="move">Move: </span>
+    </div>
+    <div id="container"><hr/>
+      <div class="floor">
+        <input type="button" id="5" value="5" />
+      </div><hr/>
+      <div class="floor">
+        <input type="button" id="4" value="4" />
+      </div><hr/>
+      <div class="floor">
+        <input type="button" id="3" value="3" />
+      </div><hr/>
+      <div class="floor">
+        <input type="button" id="2" value="2" />
+      </div><hr/>
+      <div class="floor">
+        <input type="button" id="1" value="1" />
+        <input type="button" id="ev" value="EV" />
+      </div><hr/>
+    </div>
+    <script type="text/javascript">
+
+    //전역 변수: 엘레베이터 상태
+      var ev_standby=true;
+      var ev_direction;
+      var ev_destination;
+      var ev_door;
+      var ev_callarray= new Array(0);
+
+      //각 층 콜이 올 때
+      function floorCall(){
+        //버튼 누른 층 콜 값을 받음
+        let call_floor = parseInt(this.value);
+        console.log(call_floor);
+
+        //현재 층(엘베 있는 층) 값을 가져옴
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+
+        //엘베가 대기중인가?  --> yes면 direction 정하고 움직이기 시작
+        //                  --> no면 direction 확인하고 현재층 기준으로 대기순서 미룰 것인지 정함/ direction과 목적지층과 확인해 목적층 수정하거나 중간에 태워감(우선순위 땡김)
+        if(ev.standby==true){
+          startEv(call_floor);
+        } else {
+          adjustEv();
+        }
+      }
+
+      //대기중인 엘베 움직이기
+      function startEv(call_floor){
+        let ev = document.querySelector('#ev');
+        let ev_floor = parseInt(ev.parentNode.children[0].id);
+
+        //1. 방향 정하기
+        //현재 층과 콜 값을 비교함
+        let gap = ev_floor - call_floor; //음수면 콜값이 높음. c.f 0 이면 현재층
+
+        //현재 층보다 콜 값이 높나? yes-> direction=up // no ->
+        if(gap < 0) { //콜 값이 높음
+          ev_direction="up";
+
+        } else if (gap < 0) { // 콜 값이 낮음
+          ev_direction="down";
+
+        } else if (gap = 0) { // 같으면 그냥 문 열림.
+
+        } else { //undefined 등
+          console.log("gap: "+ gap);
+          console.log("floorCall gap 값 확인");
+        }
+
+        //2. 목적지 배열 조정하기
+        //목적 층이 있나? yes -> //no -> 콜 값을 목적층으로 세팅
+        if(ev_destination==''){
+          //목적층 없을때 콜 값 목적층으로 세팅. 빈 배열에 넣어줌.
+          ev_destination=call_floor;
+          ev_callarray[0]=call_floor;
+
+        } else {
+          //목적지 층이 이미 있을때 배열 조정.
+          //상세 목적층 정하기로.
+          adjustEv(call_floor);
+        }
+
+        //3. 엘베 조정
+        handleEV();
+      }
+
+      //목적지 배열 조정
+      function adjustEv(call_floor){
+
+        //1. 방향을 확인
+
+        //2. 배열을 조정한다.
+        //2-1. dir=up 일 때
+        //2-1-1 call 값 현재 층 보다 높다
+        //2-1-1-1 call 값 목적 층 보다 높다 (목적 층 수정)
+        //2-1-1-2 call 값 목적 층 보다 낮다 (도중에 call층 들름)
+        // +목적층 이전 배열 slice해서 sort 해주고 다시 붙여줌.
+        //2-1-2 call 값 현재 층 보다 높지 않다. (목적지 도착 이후로 미룬다. 배열 마지막 추가.)
+
+
+        //2-2. dir=down 일 때
+        //2-2-1 call 값 현재 층 보다 높다(목적지 도착 이후로 미룬다. 배열 마지막 추가.)
+
+        //2-2-2 call 값 현재 층 보다 높지 않다.
+        //2-2-2-1 call 값 목적 층 보다 높다 (도중에 call 층 들름)
+        //2-2-2-2 call 값 목적 층 보다 낮다 (목적층 수정)
+        // +목적층 이전 배열 slice해서 sort 해주고 다시 붙여줌.
+
+
+        //3. 배열을 반환한다.
+
+      }
+
+      //배열 정리하는 메소드
+      function sortFloor(){
+
+        //1.목적 층을 알아낸다.
+        //2.목적 층 기준으로 slice 한다.
+        //3.목적 층 이전을 방향에 따라 (오름/내림차순) 정렬한다.
+        //4.배열을 합친다.
+        //5.반환한다.
+
+      }
+
+
+      //배열에 따른 엘베 조정 <--- 이걸 초마다?
+      function handleEv(){
+        //0. 엘베 문이 열려있으면 닫는다. -> 한 타임 종료.
+
+        //1. 콜 배열 받는다.
+
+        //2. 현재 층과 배열[0] 비교한다.
+
+        //2-1. 현재 층=배열[0] 일 때 엘리베이터 세우고 문을 연다. -> 한 타임 종료
+
+        //3. 방향을 확인한다.
+
+        //4. 현재 층에서 한 층 이동한다. -> 한 타임 종료
+
+
+      }
+
+
+
+      function moveEv(){
+
+      }
+
+      function openEv(){
+
+      }
+
+      function closeEv(){
+
+      }
+
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Elevator</title>
+    <style>
+      #container{ border: 2px solid grey; width:350px;  margin-left:100px;}
+      #ev{border: 1px solid black; width: 50px; height: 70px;
+          position:absolute;
+          margin-left: 230px; top:550px;
+
+          }
+      input {margin-left:10px; width:50px; height:30px;}
+      img {margin-left: 50px; width: 70px; float: left;}
+      .floor{vertical-align: middle;}
+      .btn{float:left; }
+      #reset {clear:both;}
+
+    </style>
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  </head>
+  <body>
+    <h2>Elevator</h2>
+    <div id="container">
+      <hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="5f" value="5" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" ></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="4f" value="4" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="3f" value="3" class="floorBtn"/></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="2f" value="2" class="floorBtn" /></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="1f" value="1" class="floorBtn" /></div>
+        <div class="img"><img src="img/off.png" alt="닫힘" /></div>
+        <div id="ev">EV</div>
+      </div>
+      <div id="reset"></div><hr>
+      <div class="floor">
+        <div class="btn"><input type="button" id="up" value="up"/></div>
+        <div class="btn"><input type="button" id="down" value="down"/></div>
+        <div class="btn"><input type="button" id="on" value="on"/></div>
+        <div class="off"><input type="button" id="off" value="off"/></div>
+      </div>
+      <div id="reset"></div>
+      <hr>
+    </div>
+
+    <script type="text/javascript">
+      $(document).ready(function(){
+
+        //엘베 문열림
+        $("#on").click(function(){
+          let all_floor = document.querySelectorAll("img");
+          console.log(all_floor[2]);
+          $(all_floor).eq(0).attr("src", "img/on.png");
+
+        });
+        //엘베 문닫힘
+        $("#off").click(function(){
+          let all_floor = document.querySelectorAll("img");
+          $(all_floor).eq(0).attr("src", "img/off.png");
+        });
+
+
+        $('#up').click(function(){
+          $("#ev").css({"background-color":"pink", "color":"white"})
+          .animate({"top":"-=110px"});
+          console.log(ev);
+
+        }),
+
+        $('#down').click(function(){
+          $("#ev").css({"background-color":"pink", "color":"white"})
+          .animate({"top":"+=110px"});
+          console.log(ev);
+          console.log("ev:"+ev.css("top"));
+
+        });
+      });
+
+      $('#5f').click(function(){
+        $("#ev").css({"background-color":"pink", "color":"white"})
+        .animate({"top":"0px"});
+      })
+
+    </script>
+  </body>
+</html>
