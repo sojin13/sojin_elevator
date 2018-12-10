@@ -66,24 +66,20 @@
       });
 
 
-      //<1> 버튼 콜 시스템(엘리베이터 콜/ 최초 동작 신호 줌startEv())
-      function floorCall(){
+      //<1> 버튼 콜 시스템(엘리베이터 콜/ 최초 동작 신호 줌 startEv())
+      function pushTheButtons(){
 
         //1. 버튼 누른 층 콜 값을 받음
         let call_floor = parseInt(this.value);
         let message = 'on';
-        console.log(call_floor);
-        floorBtnAdjust(call_floor, message);
+        adjustFloorBtn(call_floor, message);
 
-        //2. 현재 층(엘베 있는 층) 값을 가져옴
+        //2. 현재 층(엘베 있는 층) 위치 정보 값을 가져옴
         let ev = document.querySelector('#ev');
         let evTop = parseInt(getStyle(ev, 'top', 'top'));
-        console.log("floorCall() evTop: "+evTop);
 
         let findFloor = (660-evTop) / 110;
         let ev_floor = Math.floor(findFloor)
-        console.log("floorCall() findFloor: "+findFloor);
-        console.log("floorCall() ev_floor: "+ev_floor);
 
         //3.엘베가 대기중인가?
         if(ev_standby==true){
@@ -96,7 +92,7 @@
             ev_callarray.push(call_floor);
           }
         }
-      } //floorCall() 끝
+      } //pushTheButtons() 끝
 
 
       //3-1 대기중인 엘베 가동 메소드
@@ -129,7 +125,6 @@
 
             //jQuery에서는 모두 moveEle()로 간다.
             moveEle();
-
         }
       } //startEv()끝
 
@@ -153,48 +148,42 @@
           } else {
             turnOnEle();
             let tmp = ev_callarray[0];
-            console.log(tmp);
             $("#ev").animate({"top":550-((tmp-1)*110)+"px"}, 1000);
             let key= setTimeout("openDoor("+tmp+")", 1500);
-
           }
         }
       }
 
       function openDoor(tmp){
         let all_floor = document.querySelectorAll("img");
-
         $(all_floor).eq(5-tmp).attr("src","img/on.png");
         let key = setTimeout("closeDoor("+tmp+")", 500);
-
       }
+
 
       function closeDoor(tmp){
         let all_floor = document.querySelectorAll("img");
-
-        floorBtnAdjust(tmp, "off");
+        adjustFloorBtn(tmp, "off");
         $(all_floor).eq(5-tmp).attr("src","img/off.png");
 
-        //안전장치 - 방향
+        //경로 보정1 :목적지 도착시 방향전환
         if(ev_callarray[0]==ev_destination && ev_callarray.length>1){
           ev_direction=='up'? ev_direction='down' : ev_direction='up';
         }
+
         ev_callarray.shift();
 
-
-        //안전장치 - 정렬
+        //경로 보정2: 방향에 따라 경유지/목적지/후순위 콜 배열 지정
         if(ev_direction=='up'){
-
           let arr=ev_callarray.filter(function(n){
             return n >= tmp;
           });
-
           let arr2=ev_callarray.filter(function(n){
             return n < tmp;
           });
 
           arr.sort(function(a, b){return a-b});
-          ev_destination=arr[arr.length-1];
+          ev_destination=arr[arr.length-1]; //남은 배열 중 제일 큰 숫자  = 목적지
           arr2.sort(function(a, b){return b-a});
           ev_callarray=arr.concat(arr2);
 
@@ -209,10 +198,8 @@
             return n > tmp;
           });
           arr.sort(function(a, b){return b-a});
-          ev_destination=arr[arr.length-1];
-          console.log(arr);
+          ev_destination=arr[arr.length-1]; //남은 배열 중 제일 작은 숫자 = 목적지
           arr2.sort(function(a, b){return a-b});
-          console.log(arr2);
           ev_callarray=arr.concat(arr2);
 
           console.log("closeDoor down: "+ev_callarray);
@@ -220,32 +207,7 @@
         }
 
         moveEle();
-
       }
-
-
-      //목적지 조정 메소드
-      function adjustDestin(){
-        if(ev_direction=='up'){
-          ev_callarray.sort(function(a, b){return a-b});
-          let num = ev_callarray.length;
-          console.log(num);
-          ev_destination=ev_callarray[num-1];
-
-
-        } else {
-          ev_callarray.sort(function(a, b){return b-a});
-          let num = ev_callarray.length;
-          console.log(num);
-          ev_destination=ev_callarray[num-1];
-        }
-        console.log("---------------------------");
-        console.log("ev_callarray: "+ev_callarray);
-        console.log("ev_direction: "+ev_direction);
-        console.log("ev_destination: "+ev_destination);
-        console.log("------------adjustDestin() 끝");
-      }
-
 
 
       //엘리베이터 작동/미작동 색상 변경
@@ -257,14 +219,13 @@
       }
 
       //버튼 색 변경 관련 메소드
-      function floorBtnAdjust(floor, message){
+      function adjustFloorBtn(floor, message){
         if (message=="on"){ //버튼 누름
           let btn = $("#"+floor+"f");
-          console.log(floor);
-          console.log(btn);
           $(btn).css("background-color","red");
           $(btn).css("disabled","disabled");
-        } else if (message="off") { //콜 삭제
+
+        } else if (message="off") {
           let btn = $("#"+floor+"f");
           $(btn).css("background-color","");
           $(btn).css("disabled","");
