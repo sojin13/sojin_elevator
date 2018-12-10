@@ -1,5 +1,4 @@
 # elevator
-jquery
 
-
-simple Elevator javascript(vanillaJS)/jquery
+https://sojin13.github.io/elevator/.
+Simple Elevator javascript(vanillaJS)/jquery
